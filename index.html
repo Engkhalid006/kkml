@@ -3,76 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eng Khalid - مشغل الوسائط</title>
+    <title>Eng Khalid | مشغل الوسائط</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <h1>Eng Khalid</h1>
+        <div class="header-content">
+            <h1>Eng Khalid</h1>
+            <p>مشغل الأفلام والمسلسلات والأنمي</p>
+        </div>
         <nav>
-            <button class="active" data-section="home">الرئيسية</button>
-            <button data-section="movies">الأفلام</button>
-            <button data-section="series">المسلسلات</button>
-            <button data-section="anime">الأنمي</button>
-            <button data-section="explorer">مستكشف المواقع</button>
+            <button class="active" data-section="home">🏠 الرئيسية</button>
+            <button data-section="movies">🎬 الأفلام</button>
+            <button data-section="series">📺 المسلسلات</button>
+            <button data-section="anime">👾 الأنمي</button>
+            <button data-section="explorer">🔍 مستكشف المواقع</button>
         </nav>
     </header>
 
     <main>
+        <!-- قسم الرئيسية -->
         <section id="home" class="content-section active">
-            <h2>مرحبًا بك في Eng Khalid</h2>
-            <p>مشغل الوسائط المتكامل لمشاهدة الأفلام والمسلسلات والأنمي</p>
-            
+            <div class="welcome-box">
+                <h2>مرحباً بك في Eng Khalid</h2>
+                <p>منصة متكاملة لمشاهدة وتنظيم محتواك المفضل</p>
+            </div>
+
             <div class="add-media">
-                <h3>إضافة محتوى جديد</h3>
+                <h3>➕ إضافة محتوى جديد</h3>
                 <form id="addForm">
                     <select id="mediaType" required>
-                        <option value="">اختر النوع</option>
-                        <option value="movie">فيلم</option>
-                        <option value="series">مسلسل</option>
-                        <option value="anime">أنمي</option>
+                        <option value="">📁 اختر النوع</option>
+                        <option value="movie">🎬 فيلم</option>
+                        <option value="series">📺 مسلسل</option>
+                        <option value="anime">👾 أنمي</option>
                     </select>
-                    <input type="text" id="mediaTitle" placeholder="اسم المحتوى" required>
-                    <input type="url" id="mediaUrl" placeholder="رابط المشاهدة" required>
-                    <button type="submit">إضافة</button>
+                    <input type="text" id="mediaTitle" placeholder="✏️ اسم المحتوى" required>
+                    <input type="url" id="mediaUrl" placeholder="🔗 رابط المشاهدة" required>
+                    <button type="submit">💾 حفظ</button>
                 </form>
             </div>
-            
+
             <div class="continue-watching">
-                <h3>استكمال المشاهدة</h3>
-                <div id="continueList"></div>
+                <h3>⏯️ استكمال المشاهدة</h3>
+                <div id="continueList" class="media-grid"></div>
             </div>
         </section>
 
+        <!-- قسم الأفلام -->
         <section id="movies" class="content-section">
-            <h2>الأفلام</h2>
-            <div class="media-grid" id="moviesList"></div>
+            <h2>🎬 مكتبة الأفلام</h2>
+            <div id="moviesList" class="media-grid"></div>
         </section>
 
+        <!-- قسم المسلسلات -->
         <section id="series" class="content-section">
-            <h2>المسلسلات</h2>
-            <div class="media-grid" id="seriesList"></div>
+            <h2>📺 مكتبة المسلسلات</h2>
+            <div id="seriesList" class="media-grid"></div>
         </section>
 
+        <!-- قسم الأنمي -->
         <section id="anime" class="content-section">
-            <h2>الأنمي</h2>
-            <div class="media-grid" id="animeList"></div>
-        </section>
-
-        <section id="explorer" class="content-section">
-            <h2>مستكشف المواقع</h2>
-            <div class="site-explorer">
-                <form id="explorerForm">
-                    <input type="url" id="siteUrl" placeholder="أدخل رابط الموقع" required>
-                    <button type="submit">استكشاف</button>
-                </form>
-                <div id="explorerResults"></div>
-            </div>
+            <h2>👾 مكتبة الأنمي</h2>
+            <div id="animeList" class="media-grid"></div>
         </section>
     </main>
 
     <footer>
-        <p>Eng Khalid &copy; 2023 - جميع الحقوق محفوظة</p>
+        <p>Eng Khalid &copy; <span id="currentYear"></span> | جميع الحقوق محفوظة</p>
     </footer>
 
     <script src="js/main.js"></script>
