@@ -3,26 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eng Khalid - مستكشف المواقع</title>
+    <title>Eng Khalid | مستكشف المواقع</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <h1>Eng Khalid - مستكشف المواقع</h1>
-        <button onclick="window.close()" class="back-btn">رجوع</button>
+        <div class="header-content">
+            <h1>🔍 مستكشف المواقع</h1>
+            <p>أدخل رابط موقع لاستكشاف محتواه</p>
+        </div>
+        <button onclick="window.close()" class="back-btn">← رجوع</button>
     </header>
 
     <main>
-        <div class="site-explorer">
+        <div class="explorer-container">
             <form id="explorerForm">
-                <input type="url" id="siteUrl" placeholder="أدخل رابط الموقع" required>
-                <button type="submit">استكشاف</button>
+                <div class="input-group">
+                    <input type="url" id="siteUrl" placeholder="https://example.com" required>
+                    <button type="submit">بحث</button>
+                </div>
             </form>
-            <div id="explorerResults">
-                <p>أدخل رابط موقع لاستكشاف محتواه</p>
+            
+            <div class="explorer-results" id="explorerResults">
+                <div class="placeholder">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2991/2991606.png" alt="مستكشف">
+                    <p>أدخل رابط موقع لبدء الاستكشاف</p>
+                </div>
             </div>
         </div>
     </main>
+
+    <footer>
+        <p>Eng Khalid Explorer © <span id="currentYear"></span></p>
+    </footer>
 
     <script src="js/explorer.js"></script>
 </body>
