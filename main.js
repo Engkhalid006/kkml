@@ -17,6 +17,9 @@ const mediaLists = {
     anime: document.getElementById('animeList')
 };
 
+// تهيئة السنة الحالية في التذييل
+document.getElementById('currentYear').textContent = new Date().getFullYear();
+
 // تغيير القسم المعروض
 navButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -29,11 +32,6 @@ navButtons.forEach(button => {
         // تحديث المحتوى
         sections.forEach(section => section.classList.remove('active'));
         document.getElementById(sectionId).classList.add('active');
-        
-        // إذا كان قسم المستكشف، افتح صفحة جديدة
-        if (sectionId === 'explorer') {
-            window.open('explorer.html', '_blank');
-        }
     });
 });
 
@@ -42,24 +40,42 @@ addForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
     const type = document.getElementById('mediaType').value;
-    const title = document.getElementById('mediaTitle').value;
-    const url = document.getElementById('mediaUrl').value;
+    const title = document.getElementById('mediaTitle').value.trim();
+    const url = document.getElementById('mediaUrl').value.trim();
     
-    if (!type || !title || !url) return;
+    if (!type || !title || !url) {
+        alert('الرجاء ملء جميع الحقول');
+        return;
+    }
     
+    // إنشاء كائن المحتوى
     const media = {
         id: Date.now().toString(),
         title,
         url,
+        type,
         addedAt: new Date().toISOString(),
-        thumbnail: `https://img.youtube.com/vi/${getYouTubeId(url)}/0.jpg` // لروابط يوتيوب فقط
+        thumbnail: generateThumbnail(url)
     };
     
-    mediaData[type + 's'].push(media);
+    // إضافة إلى القائمة المناسبة
+    mediaData[`${type}s`].unshift(media); // إضافة في البداية
     saveMediaData();
     renderMediaLists();
     addForm.reset();
+    
+    // إظهار رسالة نجاح
+    showNotification('تمت إضافة المحتوى بنجاح!');
 });
+
+// إنشاء ثامبنييل من الرابط
+function generateThumbnail(url) {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = getYouTubeId(url);
+        if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+    return 'https://via.placeholder.com/300x170/222/eee?text=No+Thumbnail';
+}
 
 // استخراج ID من رابط يوتيوب
 function getYouTubeId(url) {
@@ -80,36 +96,62 @@ function saveMediaData() {
 function renderMediaLists() {
     // عرض "استكمال المشاهدة"
     continueList.innerHTML = '';
+    const continueWatching = [];
+    
     for (const id in mediaData.progress) {
         const media = [...mediaData.movies, ...mediaData.series, ...mediaData.anime].find(m => m.id === id);
-        if (media) {
-            const percent = Math.floor(mediaData.progress[id] * 100);
-            continueList.innerHTML += `
-                <div class="media-item">
-                    <img src="${media.thumbnail || 'https://via.placeholder.com/300x150?text=No+Thumbnail'}" alt="${media.title}">
-                    <div class="media-info">
-                        <h3>${media.title}</h3>
-                        <p>${percent}% تم المشاهدة</p>
-                        <button onclick="playMedia('${media.id}')">استكمال المشاهدة</button>
-                    </div>
-                </div>
-            `;
-        }
+        if (media) continueWatching.push(media);
+    }
+    
+    if (continueWatching.length > 0) {
+        continueWatching.slice(0, 6).forEach(media => {
+            const percent = Math.floor((mediaData.progress[media.id] || 0) * 100);
+            continueList.innerHTML += createMediaCard(media, percent);
+        });
+    } else {
+        continueList.innerHTML = '<p class="no-content">لا يوجد محتوى لمتابعته</p>';
     }
     
     // عرض المكتبة
-    for (const type in mediaLists) {
-        mediaLists[type].innerHTML = mediaData[type].map(media => `
-            <div class="media-item">
-                <img src="${media.thumbnail || 'https://via.placeholder.com/300x150?text=No+Thumbnail'}" alt="${media.title}">
-                <div class="media-info">
-                    <h3>${media.title}</h3>
-                    <p>${new Date(media.addedAt).toLocaleDateString()}</p>
-                    <button onclick="playMedia('${media.id}')">تشغيل</button>
-                </div>
+    mediaLists.movies.innerHTML = mediaData.movies.length > 0 ? 
+        mediaData.movies.map(media => createMediaCard(media)).join('') : 
+        '<p class="no-content">لا توجد أفلام مضافة</p>';
+    
+    mediaLists.series.innerHTML = mediaData.series.length > 0 ? 
+        mediaData.series.map(media => createMediaCard(media)).join('') : 
+        '<p class="no-content">لا توجد مسلسلات مضافة</p>';
+    
+    mediaLists.anime.innerHTML = mediaData.anime.length > 0 ? 
+        mediaData.anime.map(media => createMediaCard(media)).join('') : 
+        '<p class="no-content">لا يوجد أنمي مضاف</p>';
+}
+
+// إنشاء بطاقة محتوى
+function createMediaCard(media, progress = null) {
+    const progressBar = progress ? `
+        <div class="progress-bar">
+            <div class="progress" style="width: ${progress}%"></div>
+        </div>
+    ` : '';
+    
+    const progressText = progress ? `<p>${progress}% تم المشاهدة</p>` : '';
+    
+    const typeIcon = media.type === 'movie' ? '🎬' : 
+                   media.type === 'series' ? '📺' : '👾';
+    
+    return `
+        <div class="media-item" data-id="${media.id}">
+            <img src="${media.thumbnail}" alt="${media.title}" onerror="this.src='https://via.placeholder.com/300x170/222/eee?text=No+Thumbnail'">
+            <div class="media-info">
+                <h3>${typeIcon} ${media.title}</h3>
+                ${progressText}
+                <button onclick="playMedia('${media.id}')">
+                    ▶️ تشغيل
+                </button>
             </div>
-        `).join('');
-    }
+            ${progressBar}
+        </div>
+    `;
 }
 
 // تشغيل المحتوى
@@ -119,17 +161,67 @@ function playMedia(id) {
     if (!media) return;
     
     localStorage.setItem('eng_khalid_current_media', JSON.stringify(media));
-    const playerWindow = window.open('player.html', '_blank');
+    const playerWindow = window.open('player.html', '_blank', 'width=800,height=600');
     
     // تحديث التقدم عند إغلاق النافذة
-    playerWindow.onbeforeunload = function() {
-        if (playerWindow.currentProgress) {
-            mediaData.progress[id] = playerWindow.currentProgress;
-            saveMediaData();
-            renderMediaLists();
+    const checkWindow = setInterval(() => {
+        if (playerWindow.closed) {
+            clearInterval(checkWindow);
+            renderMediaLists(); // تحديث الواجهة
         }
-    };
+    }, 500);
+}
+
+// إظهار إشعار
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 500);
+    }, 3000);
 }
 
 // التهيئة الأولية
-renderMediaLists();
+document.addEventListener('DOMContentLoaded', () => {
+    renderMediaLists();
+    
+    // إضافة نمط الإشعارات
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .no-content {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 2rem;
+            color: #777;
+        }
+    `;
+    document.head.appendChild(style);
+});
