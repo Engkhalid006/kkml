@@ -1,61 +1,147 @@
-document.getElementById('explorerForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    // تهيئة السنة الحالية
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
     
-    const url = document.getElementById('siteUrl').value;
-    if (!url) return;
+    // تحليل الموقع
+    document.getElementById('explorerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const url = document.getElementById('siteUrl').value.trim();
+        if (!url) return;
+        
+        try {
+            // عرض حالة التحميل
+            document.getElementById('explorerResults').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>جاري تحليل الموقع...</p>
+                </div>
+            `;
+            
+            // استخدام CORS Anywhere كبروكسي (يجب استبداله بخادمك الخاص للإنتاج)
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const targetUrl = url.startsWith('http') ? url : `https://${url}`;
+            
+            const response = await fetch(proxyUrl + targetUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) throw new Error('فشل في جلب الموقع');
+            
+            const html = await response.text();
+            
+            // تحليل HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // استخراج البيانات
+            const title = doc.querySelector('title')?.textContent || 'بدون عنوان';
+            const images = Array.from(doc.querySelectorAll('img')).map(img => img.src);
+            const videos = Array.from(doc.querySelectorAll('video')).map(video => video.src);
+            const links = Array.from(doc.querySelectorAll('a'))
+                .filter(a => a.href && !a.href.startsWith('javascript:'))
+                .map(a => ({ url: a.href, text: a.textContent.trim() }));
+            
+            // عرض النتائج
+            renderResults({ title, images, videos, links });
+            
+        } catch (error) {
+            document.getElementById('explorerResults').innerHTML = `
+                <div class="error">
+                    <p>حدث خطأ أثناء تحليل الموقع:</p>
+                    <p><strong>${error.message}</strong></p>
+                    <button onclick="window.location.reload()">حاول مرة أخرى</button>
+                </div>
+            `;
+            console.error('Explorer Error:', error);
+        }
+    });
+});
+
+// عرض نتائج التحليل
+function renderResults(data) {
+    let resultsHTML = `
+        <div class="site-summary">
+            <h3>${data.title}</h3>
+            <div class="stats">
+                <span>${data.images.length} صور</span>
+                <span>${data.videos.length} فيديوهات</span>
+                <span>${data.links.length} روابط</span>
+            </div>
+        </div>
+    `;
     
-    try {
-        document.getElementById('explorerResults').innerHTML = '<p>جاري تحليل الموقع...</p>';
-        
-        // في الواقع، تحتاج إلى استخدام خدمة بروكسي لتحليل المحتوى بسبب سياسة CORS
-        // هذا مثال مبسط فقط لأغراض التوضيح
-        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-        const data = await response.json();
-        
-        // تحليل المحتوى (هذا جزء مبسط جداً)
-        const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString(data.contents, 'text/html');
-        
-        // استخراج الروابط والصور
-        const links = htmlDoc.querySelectorAll('a');
-        const images = htmlDoc.querySelectorAll('img');
-        
-        // عرض النتائج
-        let resultsHTML = `
-            <h3>تم العثور على ${links.length} روابط و ${images.length} صور</h3>
-            <div class="explorer-grid">
-        `;
-        
-        // عرض الصور
-        images.forEach(img => {
-            if (img.src) {
-                resultsHTML += `
-                    <div class="explorer-item">
-                        <img src="${img.src}" alt="صورة من الموقع">
-                        <p>${img.alt || 'صورة بدون وصف'}</p>
-                    </div>
-                `;
-            }
-        });
-        
-        // عرض الروابط المهمة (تجاهل الروابط الشائعة)
-        links.forEach(link => {
-            if (link.href && !link.href.includes('javascript:') && 
-                !link.href.includes('#') && link.href.startsWith('http')) {
-                resultsHTML += `
-                    <div class="explorer-item">
-                        <a href="${link.href}" target="_blank">${link.textContent || link.href}</a>
-                    </div>
-                `;
-            }
-        });
-        
-        resultsHTML += '</div>';
-        document.getElementById('explorerResults').innerHTML = resultsHTML;
-        
-    } catch (error) {
-        document.getElementById('explorerResults').innerHTML = `
-            <p class="error">حدث خطأ أثناء تحليل الموقع: ${error.message}</p>
+    // عرض الفيديوهات
+    if (data.videos.length > 0) {
+        resultsHTML += `
+            <div class="section">
+                <h4>🎬 الفيديوهات</h4>
+                <div class="media-grid">
+                    ${data.videos.slice(0, 10).map(video => `
+                        <div class="media-item">
+                            <video controls src="${video}" style="width:100%"></video>
+                            <button onclick="addToLibrary('${video}', 'video')">+ إضافة إلى المكتبة</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
         `;
     }
-});
+    
+    // عرض الصور
+    if (data.images.length > 0) {
+        resultsHTML += `
+            <div class="section">
+                <h4>📷 الصور</h4>
+                <div class="media-grid">
+                    ${data.images.slice(0, 20).map(img => `
+                        <div class="media-item">
+                            <img src="${img}" alt="صورة من الموقع" loading="lazy">
+                            <button onclick="addToLibrary('${img}', 'image')">+ إضافة إلى المكتبة</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    // عرض الروابط المهمة
+    const importantLinks = data.links.filter(link => 
+        link.text && link.text.length > 2 && !link.url.includes('#')
+    ).slice(0, 30);
+    
+    if (importantLinks.length > 0) {
+        resultsHTML += `
+            <div class="section">
+                <h4>🔗 الروابط</h4>
+                <div class="links-list">
+                    ${importantLinks.map(link => `
+                        <div class="link-item">
+                            <a href="${link.url}" target="_blank">${link.text || link.url}</a>
+                            ${link.url.includes('youtube') ? `<button onclick="addToLibrary('${link.url}', 'video')">+ إضافة فيديو</button>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    document.getElementById('explorerResults').innerHTML = resultsHTML;
+}
+
+// إضافة إلى المكتبة
+function addToLibrary(url, type) {
+    if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+            type: 'add_to_library',
+            mediaUrl: url,
+            mediaType: type === 'video' ? 'movie' : 'image'
+        }, '*');
+        
+        alert('تم إرسال الرابط إلى الصفحة الرئيسية');
+    } else {
+        alert('الرجاء فتح الصفحة الرئيسية أولاً');
+    }
+}
