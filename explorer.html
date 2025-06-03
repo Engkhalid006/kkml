@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eng Khalid - مستكشف المواقع</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Eng Khalid - مستكشف المواقع</h1>
+        <button onclick="window.close()" class="back-btn">رجوع</button>
+    </header>
+
+    <main>
+        <div class="site-explorer">
+            <form id="explorerForm">
+                <input type="url" id="siteUrl" placeholder="أدخل رابط الموقع" required>
+                <button type="submit">استكشاف</button>
+            </form>
+            <div id="explorerResults">
+                <p>أدخل رابط موقع لاستكشاف محتواه</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/explorer.js"></script>
+</body>
+</html>
